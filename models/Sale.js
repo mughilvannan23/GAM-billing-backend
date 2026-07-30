@@ -31,6 +31,8 @@ const saleSchema = mongoose.Schema({
   saleDate: { type: Date, required: true, default: Date.now },
   subTotal: { type: Number, required: true },
   gstTotal: { type: Number, default: 0 },
+  cgstTotal: { type: Number, default: 0 },
+  sgstTotal: { type: Number, default: 0 },
   discountTotal: { type: Number, default: 0 },
   grandTotal: { type: Number, required: true },
 
