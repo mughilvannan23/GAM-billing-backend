@@ -363,10 +363,71 @@ const createSale = async (req, res) => {
   }
 };
 
+// @desc    Receive payment for pending sale
+// @route   PUT /api/sales/:id/pay
+// @access  Private
+const receivePayment = async (req, res) => {
+  try {
+    const { amount, method, transactionId, cardLast4, bankName, notes } = req.body;
+    const sale = await Sale.findOne({ _id: req.params.id, adminId: req.adminId });
+
+    if (!sale) {
+      return res.status(404).json({ message: 'Sale not found' });
+    }
+
+    const paymentAmount = Number(amount);
+    if (!paymentAmount || paymentAmount <= 0) {
+      return res.status(400).json({ message: 'Payment amount must be greater than 0' });
+    }
+
+    if (sale.pendingAmount <= 0) {
+      return res.status(400).json({ message: 'This sale has no pending amount' });
+    }
+
+    const newPayment = {
+      method: method || 'Cash',
+      amount: paymentAmount,
+      transactionId: transactionId || '',
+      cardLast4: cardLast4 || '',
+      bankName: bankName || '',
+      notes: notes || '',
+      receivedBy: req.user._id,
+      receivedDate: new Date(),
+      status: 'Paid'
+    };
+
+    sale.payments.push(newPayment);
+    sale.amountPaid = (sale.amountPaid || 0) + paymentAmount;
+    sale.pendingAmount = Math.max(0, sale.pendingAmount - paymentAmount);
+
+    if (sale.pendingAmount === 0) {
+      sale.paymentStatus = 'Paid';
+    } else {
+      sale.paymentStatus = 'Partially Paid';
+    }
+
+    const updatedSale = await sale.save();
+
+    await AuditLog.create({
+      adminId: req.adminId,
+      action: 'Payment Received for Sale',
+      module: 'Sale',
+      newValue: { invoiceNumber: sale.invoiceNumber, amount: paymentAmount, pendingAmount: sale.pendingAmount },
+      user: req.user._id,
+      ipAddress: req.ip
+    });
+
+    res.json(updatedSale);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getSales,
   getSaleById,
   getSalesReports,
   getPaymentSummary,
-  createSale
+  createSale,
+  receivePayment
 };
