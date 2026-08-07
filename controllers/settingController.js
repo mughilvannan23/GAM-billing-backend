@@ -6,7 +6,11 @@ const AuditLog = require('../models/AuditLog');
 // @access  Private/Admin
 const getSettings = async (req, res) => {
   try {
-    const settings = await Setting.findOne();
+    const filter = req.adminId ? { adminId: req.adminId } : {};
+    let settings = await Setting.findOne(filter);
+    if (!settings && req.adminId) {
+      settings = await Setting.create({ adminId: req.adminId });
+    }
     res.json(settings);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -18,10 +22,11 @@ const getSettings = async (req, res) => {
 // @access  Private/Admin
 const updateSettings = async (req, res) => {
   try {
-    let settings = await Setting.findOne();
+    const filter = req.adminId ? { adminId: req.adminId } : {};
+    let settings = await Setting.findOne(filter);
 
     if (!settings) {
-      settings = new Setting(req.body);
+      settings = new Setting({ ...req.body, adminId: req.adminId });
       await settings.save();
       return res.status(201).json(settings);
     }

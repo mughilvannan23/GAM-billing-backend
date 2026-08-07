@@ -53,6 +53,7 @@ app.use('/api/sales', require('./routes/saleRoutes'));
 app.use('/api/returns', require('./routes/returnRoutes'));
 app.use('/api/stock-history', require('./routes/stockHistoryRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
+app.use('/api/quotations', require('./routes/quotationRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 
 // Root Route

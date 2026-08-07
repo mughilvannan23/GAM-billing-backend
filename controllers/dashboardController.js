@@ -103,15 +103,24 @@ const getDashboardStats = async (req, res) => {
     // Inventory calculations
     const products = await Product.find({ adminId: req.adminId });
     const totalProducts = products.length;
-    let inventoryValue = 0;
+    let totalStockPurchaseValue = 0;
+    let totalStockSellingValue = 0;
     let lowStockProducts = 0;
     let outOfStockProducts = 0;
 
     products.forEach(p => {
-      inventoryValue += (p.currentStock * p.purchasePrice);
+      const stock = Math.max(0, Number(p.currentStock || 0));
+      const pPrice = Number(p.purchasePrice || 0);
+      const sPrice = Number(p.sellingPrice || 0);
+
+      totalStockPurchaseValue += (stock * pPrice);
+      totalStockSellingValue += (stock * sPrice);
+
       if (p.currentStock === 0) outOfStockProducts++;
       else if (p.currentStock <= p.minimumStock) lowStockProducts++;
     });
+
+    const totalStockMargin = totalStockSellingValue - totalStockPurchaseValue;
 
     // Recent Bills (Pending)
     const recentPendingBills = await Sale.find({ adminId: req.adminId, paymentStatus: { $ne: 'Paid' } }).sort({ createdAt: -1 }).limit(5).populate('customer', 'customerName');
@@ -134,7 +143,12 @@ const getDashboardStats = async (req, res) => {
       pendingCustomers: pendingCustomersAgg,
       todayCollectionByMethod,
       totalProducts,
-      inventoryValue,
+      inventoryValue: totalStockPurchaseValue,
+      totalStockPurchaseValue,
+      totalStockSellingValue,
+      totalStockMargin,
+      totalSoldPurchaseCost: totalSaleItems[0]?.totalPurchase || 0,
+      totalSoldSellingValue: totalSaleItems[0]?.totalSelling || 0,
       lowStockProducts,
       outOfStockProducts,
       recentBills,

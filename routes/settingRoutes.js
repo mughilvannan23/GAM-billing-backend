@@ -4,7 +4,7 @@ const { getSettings, updateSettings } = require('../controllers/settingControlle
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.route('/')
-  .get(protect, admin, getSettings)
+  .get(protect, getSettings)
   .put(protect, admin, updateSettings);
 
 module.exports = router;

@@ -187,7 +187,7 @@ const getPaymentSummary = async (req, res) => {
 // @route   POST /api/sales
 // @access  Private
 const createSale = async (req, res) => {
-  const { customerInfo, items, subTotal, gstTotal, discountTotal, grandTotal, payments } = req.body;
+  const { customerInfo, items, subTotal, gstTotal, discountTotal, labourCharge = 0, grandTotal, payments } = req.body;
 
   let customer = null;
 
@@ -301,6 +301,7 @@ const createSale = async (req, res) => {
       cgstTotal,
       sgstTotal,
       discountTotal,
+      labourCharge: Number(labourCharge) || 0,
       grandTotal,
       payments: processedPayments,
       paymentType,
@@ -331,6 +332,7 @@ const createSale = async (req, res) => {
       await saleItem.save();
 
       // Deduct stock
+      const previousStock = product.currentStock;
       product.currentStock -= item.quantity;
       await product.save();
 
@@ -338,12 +340,13 @@ const createSale = async (req, res) => {
       await StockHistory.create({
         adminId: req.adminId,
         product: product._id,
-        changeType: 'SALE',
+        type: 'Sales',
+        previousStock,
+        newStock: product.currentStock,
         quantity: item.quantity,
-        balanceStock: product.currentStock,
+        reason: `Sold via Invoice ${invoiceNumber}`,
         referenceId: createdSale._id,
-        notes: `Sold via Invoice ${invoiceNumber}`,
-        createdBy: req.user._id
+        updatedBy: req.user._id
       });
     }
 

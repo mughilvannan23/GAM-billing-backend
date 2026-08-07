@@ -74,6 +74,7 @@ const createPurchase = async (req, res) => {
 
         // Create Stock History
         await StockHistory.create({
+          adminId: req.adminId,
           product: product._id,
           type: 'Purchase',
           previousStock,

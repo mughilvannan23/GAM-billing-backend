@@ -34,6 +34,7 @@ const saleSchema = mongoose.Schema({
   cgstTotal: { type: Number, default: 0 },
   sgstTotal: { type: Number, default: 0 },
   discountTotal: { type: Number, default: 0 },
+  labourCharge: { type: Number, default: 0 },
   grandTotal: { type: Number, required: true },
 
   // --- New multi-payment fields ---
